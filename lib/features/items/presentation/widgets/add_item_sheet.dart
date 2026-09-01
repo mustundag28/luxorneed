@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../data/models/item_model.dart';
 import '../bloc/item_bloc.dart';
 import '../bloc/item_event.dart';
@@ -17,6 +18,7 @@ class _AddItemSheetState extends State<AddItemSheet> {
   final _titleController = TextEditingController();
   final _priceController = TextEditingController();
   ItemType _selectedType = ItemType.need;
+  int _coolingDays = 3; // Varsayılan 3 gün soğuma süresi
 
   @override
   void dispose() {
@@ -25,19 +27,35 @@ class _AddItemSheetState extends State<AddItemSheet> {
     super.dispose();
   }
 
-  void _submitData() {
+  Future<void> _submitData() async {
     if (_formKey.currentState!.validate()) {
+      final now = DateTime.now();
       final newItem = ItemModel(
         id: const Uuid().v4(),
         title: _titleController.text.trim(),
         price: double.parse(_priceController.text.replaceAll(',', '.')),
         type: _selectedType,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
+        createdAt: now,
+        updatedAt: now,
       );
 
+      // Veritabanına Ekle
       context.read<ItemBloc>().add(AddItemEvent(newItem));
-      Navigator.of(context).pop();
+
+      // Eğer LÜKS seçildiyse Bildirim Planla
+      if (_selectedType == ItemType.lux) {
+        final notificationDate = now.add(Duration(days: _coolingDays));
+        // Benzersiz sayısal notification ID üretimi
+        final notificationId = newItem.id.hashCode.abs();
+        
+        await NotificationService().scheduleCoolingOffNotification(
+          id: notificationId,
+          title: newItem.title,
+          scheduledDate: notificationDate,
+        );
+      }
+
+      if (mounted) Navigator.of(context).pop();
     }
   }
 
@@ -85,7 +103,6 @@ class _AddItemSheetState extends State<AddItemSheet> {
               },
             ),
             const SizedBox(height: 16),
-            // Lux / Need Seçim Switch'i
             SegmentedButton<ItemType>(
               segments: const [
                 ButtonSegment<ItemType>(
@@ -106,6 +123,30 @@ class _AddItemSheetState extends State<AddItemSheet> {
                 });
               },
             ),
+            
+            // Eğer LÜKS seçildiyse Soğuma Süresi seçeneğini göster
+            if (_selectedType == ItemType.lux) ...[
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Soğuma Süresi (Erteleme):', style: TextStyle(fontWeight: FontWeight.w600)),
+                  DropdownButton<int>(
+                    value: _coolingDays,
+                    items: const [
+                      DropdownMenuItem(value: 1, child: Text('1 Gün')),
+                      DropdownMenuItem(value: 3, child: Text('3 Gün')),
+                      DropdownMenuItem(value: 7, child: Text('7 Gün')),
+                      DropdownMenuItem(value: 14, child: Text('14 Gün')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) setState(() => _coolingDays = val);
+                    },
+                  ),
+                ],
+              ),
+            ],
+
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _submitData,
