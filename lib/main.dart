@@ -6,6 +6,7 @@ import 'features/items/data/models/item_model.dart';
 import 'features/items/data/repositories/item_repository_impl.dart';
 import 'features/items/presentation/bloc/item_bloc.dart';
 import 'features/items/presentation/bloc/item_event.dart';
+import 'features/items/presentation/pages/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,7 +19,6 @@ void main() async {
 
   final itemBox = await Hive.openBox<ItemModel>('items');
 
-  // Bağımlılıklar (Dependency Injection)
   final localDataSource = ItemLocalDataSourceImpl(itemBox);
   final itemRepository = ItemRepository(localDataSource);
 
@@ -41,11 +41,7 @@ class LuxorneedApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
           useMaterial3: true,
         ),
-        home: const Scaffold(
-          body: Center(
-            child: Text('BLoC & Hive Altyapısı Tamamlandı!'),
-          ),
-        ),
+        home: const HomeScreen(), // HomeScreen bağlandı
       ),
     );
   }
