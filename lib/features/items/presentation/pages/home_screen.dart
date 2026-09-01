@@ -4,6 +4,7 @@ import '../bloc/item_bloc.dart';
 import '../bloc/item_state.dart';
 import '../widgets/add_item_sheet.dart';
 import '../widgets/item_card.dart';
+import '../../../analytics/presentation/pages/analytics_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -24,8 +25,18 @@ class HomeScreen extends StatelessWidget {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        appBar: AppBar(
+          appBar: AppBar(
           title: const Text('Luxorneed', style: TextStyle(fontWeight: FontWeight.bold)),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.pie_chart_outline),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const AnalyticsScreen()),
+                );
+              },
+            ),
+          ],
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Tümü'),
